@@ -39,7 +39,24 @@ export function LoginForm({
       });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+     const response = await fetch("/api/authenticate", {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
+         email,
+         password,
+       }),
+     });
+     const data = await response.json();
+     if (!response.ok) {
+       throw new Error("Something went wrong, please try again.");
+     }
+     
+     if(  data.redirectUrl){
+      router.replace(data.redirectUrl);
+     }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
