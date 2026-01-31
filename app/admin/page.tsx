@@ -18,7 +18,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-async function AdminContent() {
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+async function AdminContent({ searchParams }: { searchParams: Promise<any> }) {
+  const params = await searchParams;
+  const statusFilter = params.status as string | undefined;
+  const page = parseInt(params.page as string || "1");
+  const pageSize = 10;
+  
   const supabase = await createClient();
   const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
@@ -37,26 +46,46 @@ async function AdminContent() {
     redirect("/owner");
   }
 
-  let companies: any[] = [];
+  // Fetch stats (global)
+  const { data: allStats } = await supabase
+    .from("company")
+    .select("status");
+  
+  const totalCount = allStats?.length || 0;
+  const pendingCount = allStats?.filter(c => c.status === "Pending").length || 0;
+  const activeCount = allStats?.filter(c => ["Active", "Approved"].includes(c.status)).length || 0;
+  const rejectedCount = allStats?.filter(c => c.status === "Rejected").length || 0;
 
-  try {
-    const { data, error: companiesError } = await supabase
-      .from("company")
-      .select(`
-        *,
-        owner:ownerId (
-          email
-        )
-      `)
-      .order("created_at", { ascending: false });
+  // Fetch paginated & filtered companies
+  let query = supabase
+    .from("company")
+    .select(`
+      *,
+      owner:ownerId (
+        email
+      )
+    `, { count: "exact" });
 
-    if (companiesError) throw companiesError;
-    companies = data || [];
-  } catch (error) {
-    console.error("Error fetching companies:", error);
+  if (statusFilter && statusFilter !== "all") {
+    if (statusFilter === "Approved") {
+      query = query.in("status", ["Active", "Approved"]);
+    } else {
+      query = query.eq("status", statusFilter);
+    }
   }
 
-  const pendingCount = companies.filter(c => c.status === "Pending").length;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: companies, count, error: companiesError } = await query
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (companiesError) {
+    console.error("Error fetching companies:", companiesError);
+  }
+
+  const totalPages = Math.ceil((count || 0) / pageSize);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -89,7 +118,7 @@ async function AdminContent() {
             <CardDescription className="text-blue-500 flex items-center gap-2">
               <Building2 className="h-4 w-4" /> Total Entities
             </CardDescription>
-            <CardTitle className="text-3xl font-bold">{companies.length}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{totalCount}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-amber-100 dark:border-amber-900/50 bg-amber-50/10">
@@ -105,7 +134,7 @@ async function AdminContent() {
             <CardDescription className="text-green-500 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" /> Active Entities
             </CardDescription>
-            <CardTitle className="text-3xl font-bold">{companies.filter(c => ["Active", "Approved"].includes(c.status)).length}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{activeCount}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-red-100 dark:border-red-900/50 bg-red-50/10">
@@ -113,7 +142,7 @@ async function AdminContent() {
             <CardDescription className="text-red-500 flex items-center gap-2">
               <XCircle className="h-4 w-4" /> Rejected
             </CardDescription>
-            <CardTitle className="text-3xl font-bold">{companies.filter(c => c.status === "Rejected").length}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{rejectedCount}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -121,74 +150,119 @@ async function AdminContent() {
       {/* Main Table Content */}
       <Card className="overflow-hidden border-indigo-100 dark:border-indigo-900/40">
         <CardHeader className="border-b bg-muted/30">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl">Submission Log</CardTitle>
               <CardDescription>Comprehensive list of all registered business entities.</CardDescription>
             </div>
             
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
+              <Link href="/admin?page=1&status=all">
+                <Button variant={!statusFilter || statusFilter === "all" ? "default" : "outline"} size="sm" className="h-8">
+                  All
+                </Button>
+              </Link>
+              <Link href="/admin?page=1&status=Pending">
+                <Button variant={statusFilter === "Pending" ? "default" : "outline"} size="sm" className="h-8">
+                  Pending
+                </Button>
+              </Link>
+              <Link href="/admin?page=1&status=Approved">
+                <Button variant={statusFilter === "Approved" ? "default" : "outline"} size="sm" className="h-8">
+                  Approved
+                </Button>
+              </Link>
+              <Link href="/admin?page=1&status=Rejected">
+                <Button variant={statusFilter === "Rejected" ? "default" : "outline"} size="sm" className="h-8">
+                  Rejected
+                </Button>
+              </Link>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {companies.length === 0 ? (
+          {!companies || companies.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">
-              No company submissions found in the database.
+              No company submissions found matching the criteria.
             </div>
           ) : (
-            <div className="relative w-full overflow-auto">
-              <table className="w-full caption-bottom text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50 transition-colors">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Company Name</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Owner</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date Submitted</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
-                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground px-6">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="[&_tr:last-child]:border-0">
-                  {companies.map((company) => (
-                    <tr 
-                      key={company.id} 
-                      className={`border-b transition-colors hover:bg-muted/30 group ${company.status === 'Pending' ? 'bg-indigo-50/10 dark:bg-indigo-900/5' : ''}`}
-                    >
-                      <td className="p-4 align-middle">
-                        <div className="font-bold flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
-                          {company.name}
-                        </div>
-                        <div className="text-xs text-muted-foreground font-mono mt-0.5">{company.slug}</div>
-                      </td>
-                      <td className="p-4 align-middle font-medium">{company.owner?.email || "N/A"}</td>
-                      <td className="p-4 align-middle text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3.5 w-3.5" />
-                          {new Date(company.created_at).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <Badge 
-                          variant={["Active", "Approved"].includes(company.status) ? "default" : company.status === "Pending" ? "secondary" : "destructive"}
-                          className={`
-                            ${company.status === 'Pending' ? 'animate-pulse bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300' : ''}
-                            ${["Active", "Approved"].includes(company.status) ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : ''}
-                          `}
-                        >
-                          {company.status}
-                        </Badge>
-                      </td>
-                      <td className="p-4 align-middle text-right px-6">
-                        <Button asChild variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform">
-                          <Link href={`/admin/companies/${company.id}`} className="gap-2">
-                            View Details <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                      </td>
+            <>
+              <div className="relative w-full overflow-auto">
+                <table className="w-full caption-bottom text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50 transition-colors">
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Company Name</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Owner</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date Submitted</th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                      <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground px-6">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="[&_tr:last-child]:border-0">
+                    {companies.map((company) => (
+                      <tr 
+                        key={company.id} 
+                        className={`border-b transition-colors hover:bg-muted/30 group ${company.status === 'Pending' ? 'bg-indigo-50/10 dark:bg-indigo-900/5' : ''}`}
+                      >
+                        <td className="p-4 align-middle">
+                          <div className="font-bold flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            {company.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground font-mono mt-0.5">{company.slug}</div>
+                        </td>
+                        <td className="p-4 align-middle font-medium">{company.owner?.email || "N/A"}</td>
+                        <td className="p-4 align-middle text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-3.5 w-3.5" />
+                            {new Date(company.created_at).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td className="p-4 align-middle">
+                          <Badge 
+                            variant={["Active", "Approved"].includes(company.status) ? "default" : company.status === "Pending" ? "secondary" : "destructive"}
+                            className={`
+                              ${company.status === 'Pending' ? 'animate-pulse bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300' : ''}
+                              ${["Active", "Approved"].includes(company.status) ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : ''}
+                            `}
+                          >
+                            {company.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 align-middle text-right px-6">
+                          <Button asChild variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform">
+                            <Link href={`/admin/companies/${company.id}`} className="gap-2">
+                              View Details <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination UI */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t bg-muted/20">
+                  <div className="text-xs text-muted-foreground">
+                    Showing {from + 1} to {Math.min(from + pageSize, count || 0)} of {count} entries
+                  </div>
+                  <div className="flex gap-2">
+                    <Link href={`/admin?page=${page - 1}&status=${statusFilter || "all"}`}>
+                      <Button variant="outline" size="sm" disabled={page <= 1}>
+                        Previous
+                      </Button>
+                    </Link>
+                    <Link href={`/admin?page=${page + 1}&status=${statusFilter || "all"}`}>
+                      <Button variant="outline" size="sm" disabled={page >= totalPages}>
+                        Next
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -196,7 +270,7 @@ async function AdminContent() {
   );
 }
 
-export default function AdminPage() {
+export default function AdminPage({ searchParams }: Props) {
   return (
     <main className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-6 md:p-12">
       <Suspense fallback={
@@ -205,8 +279,9 @@ export default function AdminPage() {
           <p className="text-muted-foreground font-medium animate-pulse">Loading dashboard...</p>
         </div>
       }>
-        <AdminContent />
+        <AdminContent searchParams={searchParams} />
       </Suspense>
     </main>
   );
 }
+

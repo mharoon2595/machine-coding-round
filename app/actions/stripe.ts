@@ -27,7 +27,7 @@ export async function createCheckoutSession(companyId: number, companyName: stri
               name: `DSAR Portal Subscription - ${companyName}`,
               description: `Monthly subscription for privacy compliance management.`,
             },
-            unit_amount: 2900, // $29.00
+            unit_amount: 2900, // £29.00
             recurring: {
               interval: "month",
             },

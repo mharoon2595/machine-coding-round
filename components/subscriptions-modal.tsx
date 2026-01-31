@@ -172,7 +172,7 @@ export function SubscriptionsModal({ companies }: { companies: Company[] }) {
 
             <div className="p-6 border-t bg-muted/50 flex flex-col sm:flex-row items-center justify-between gap-4">
                <p className="text-xs text-muted-foreground max-w-[280px]">
-                 Subscriptions are billed monthly at <strong>$29/company</strong>. Cancel anytime from your billing portal.
+                 Subscriptions are billed monthly at <strong>£29/company</strong>. Cancel anytime from your billing portal.
                </p>
               <Button onClick={() => setIsOpen(false)} variant="secondary" className="w-full sm:w-auto font-bold px-8">
                 Done

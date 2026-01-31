@@ -23,13 +23,26 @@ import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
 import { CompanyActions } from "./company-actions";
 import { DsarStatusManager } from "@/components/dsar-status-manager";
+import { DsarList } from "@/components/dsar-list";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-async function CompanyDetails({ params }: { params: Promise<{ id: string }> }) {
+async function CompanyDetails({ 
+  params,
+  searchParams
+}: { 
+  params: Promise<{ id: string }>,
+  searchParams: Promise<any>
+}) {
   const { id } = await params;
+  const sParams = await searchParams;
+  const statusFilter = sParams.status as string | undefined;
+  const page = parseInt(sParams.page as string || "1");
+  const pageSize = 5;
+
   const supabase = await createClient();
 
   // Verify Admin
@@ -60,11 +73,22 @@ async function CompanyDetails({ params }: { params: Promise<{ id: string }> }) {
 
   if (error || !company) notFound();
 
-  const { data: dsars, error: dsarError } = await supabase
+  // Fetch filtered/paginated DSARs
+  let query = supabase
     .from("dsar_request_list")
-    .select("*")
-    .eq("companyId", company.id)
-    .order("created_at", { ascending: false });
+    .select("*", { count: "exact" })
+    .eq("companyId", company.id);
+
+  if (statusFilter && statusFilter !== "all") {
+    query = query.eq("status", statusFilter);
+  }
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data: dsars, count, error: dsarError } = await query
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -161,88 +185,20 @@ async function CompanyDetails({ params }: { params: Promise<{ id: string }> }) {
         </Card>
       )}
 
-       {!dsars || dsars.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-muted/30 rounded-3xl border-2 border-dashed border-muted">
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <MessageSquare className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold">No requests received</h3>
-            <p className="text-muted-foreground mt-1 text-center max-w-sm">
-              {["Active", "Approved"].includes(company.status) && company.subscriptionStatus === "active" ? "Your public [DSAR Portal Page] is active. Customers can submit requests there." : "Public [DSAR Portal Page] is not active as it is either pending admin approval or subscription is not active or both. Customers cannot submit requests there right now."}
-            </p>
-            <Link href={`/dsar/${company.slug}`} target="_blank" className="mt-6">
-               <Button variant="outline" className="gap-2">
-                  <ExternalLink className="h-4 w-4" /> View Public Portal
-               </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {dsars.map((dsar) => (
-              <Card key={dsar.id} className="overflow-hidden hover:border-blue-200 transition-all duration-300 group shadow-sm">
-                <div className="flex flex-col lg:flex-row">
-                  <div className={`w-2 ${
-                    dsar.status === 'open' ? 'bg-amber-400' : 
-                    dsar.status === 'in_progress' ? 'bg-blue-500' :
-                    dsar.status === 'in_review' ? 'bg-purple-500' :
-                    'bg-green-500'
-                  }`} />
-                  
-                  <div className="flex-1 p-6">
-                    <div className="flex flex-col md:flex-row justify-between gap-6 mb-6">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-blue-600" />
-                          <h4 className="text-xl font-bold">{dsar.requesterName}</h4>
-                          <Badge variant="outline" className="ml-2 h-5 text-[10px] uppercase tracking-tighter">
-                             ID: #{dsar.id}
-                          </Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
-                            <Mail className="h-3.5 w-3.5" />
-                            <a href={`mailto:${dsar.requesterEmail}`}>{dsar.requesterEmail}</a>
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <Phone className="h-3.5 w-3.5" />
-                            {dsar.requesterPhone}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="h-3.5 w-3.5" />
-                            {new Date(dsar.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="shrink-0 flex items-center justify-end">
-                         <DsarStatusManager 
-                           dsarId={dsar.id} 
-                           currentStatus={dsar.status} 
-                           companySlug={company.id.toString()} // using ID to revalidate
-                           requesterEmail={dsar.requesterEmail}
-                         />
-                      </div>
-                    </div>
-
-                    <div className="bg-muted/40 p-5 rounded-2xl border border-muted relative group-hover:bg-muted/60 transition-colors">
-                      <div className="absolute -top-3 left-4 bg-background px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" /> Submitted Instruction
-                      </div>
-                      <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                        {dsar.requestText}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+      <DsarList 
+        dsars={dsars || []}
+        count={count || 0}
+        page={page}
+        pageSize={pageSize}
+        statusFilter={statusFilter}
+        baseUrl={`/admin/companies/${company.id}`}
+        company={company}
+      />
     </div>
   );
 }
 
-export default function Page({ params }: Props) {
+export default function Page({ params, searchParams }: Props) {
   return (
     <main className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-6 md:p-12">
       <Suspense fallback={
@@ -251,8 +207,9 @@ export default function Page({ params }: Props) {
           <p className="text-muted-foreground font-medium animate-pulse">Loading company details...</p>
         </div>
       }>
-        <CompanyDetails params={params} />
+        <CompanyDetails params={params} searchParams={searchParams} />
       </Suspense>
     </main>
   );
 }
+

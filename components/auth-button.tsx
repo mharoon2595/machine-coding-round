@@ -41,7 +41,7 @@ export async function AuthButton() {
   return user ? (
     <div className="flex items-center justify-between gap-4 p-5">
       <Link href="/">DSAR Portal</Link>
-      <div className="flex flex-wrap gap-2 items-center">
+      <div className="flex flex-wrap gap-2 items-center justify-end">
       Hey, {user.email}!
       {redirectButton}
       <LogoutButton />
