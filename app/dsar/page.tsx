@@ -5,7 +5,8 @@ import {
   ArrowRight, 
   ShieldCheck, 
   Fingerprint,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AuthButton } from "@/components/auth-button";
 
-export default async function DsarPortalPage() {
+async function DsarPortalContent() {
   const supabase = await createClient();
 
   // Fetch all active companies
@@ -24,6 +25,67 @@ export default async function DsarPortalPage() {
     .eq("status", "Approved")
     .order("name", { ascending: true });
 
+  return (
+    <main className="max-w-7xl mx-auto px-6 py-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div>
+          <h2 className="text-2xl font-bold">Verified Organizations</h2>
+          <p className="text-muted-foreground">Select an organization to start your privacy request.</p>
+        </div>
+        
+        <div className="relative w-full md:w-96">
+        </div>
+      </div>
+
+      {!companies || companies.length === 0 ? (
+        <Card className="border-dashed py-20 text-center">
+          <CardContent>
+            <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-xl font-medium">No organizations available yet</p>
+            <p className="text-muted-foreground mt-1 text-lg">Check back later for newly verified businesses.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {companies.map((company) => (
+            <Link 
+              key={company.id} 
+              href={`/dsar/${company.slug}`}
+              className="group block"
+            >
+              <Card className="h-full hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-blue-500 overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Fingerprint className="h-12 w-12" />
+                </div>
+                <CardHeader>
+                  <div className="h-12 w-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Building2 className="h-7 w-7 text-blue-600" />
+                  </div>
+                  <CardTitle className="text-2xl group-hover:text-blue-600 transition-colors uppercase truncate">
+                    {company.name}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2 mt-1 font-medium">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      Verified
+                    </Badge>
+                    <span className="text-muted-foreground text-xs">{company.representation}</span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center text-blue-600 font-semibold group-hover:gap-3 gap-2 transition-all">
+                    Submit Request <ArrowRight className="h-4 w-4" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
+    </main>
+  );
+}
+
+export default function DsarPortalPage() {
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
       
@@ -44,64 +106,14 @@ export default async function DsarPortalPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div>
-            <h2 className="text-2xl font-bold">Verified Organizations</h2>
-            <p className="text-muted-foreground">Select an organization to start your privacy request.</p>
-          </div>
-          
-          <div className="relative w-full md:w-96">
-            
-            
-          </div>
+      <Suspense fallback={
+        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col items-center justify-center space-y-4">
+          <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
+          <p className="text-muted-foreground font-medium animate-pulse">Scanning authorized organizations...</p>
         </div>
-
-        {!companies || companies.length === 0 ? (
-          <Card className="border-dashed py-20 text-center">
-            <CardContent>
-              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-xl font-medium">No organizations available yet</p>
-              <p className="text-muted-foreground mt-1 text-lg">Check back later for newly verified businesses.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {companies.map((company) => (
-              <Link 
-                key={company.id} 
-                href={`/dsar/${company.slug}`}
-                className="group block"
-              >
-                <Card className="h-full hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 border-l-blue-500 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Fingerprint className="h-12 w-12" />
-                  </div>
-                  <CardHeader>
-                    <div className="h-12 w-12 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <Building2 className="h-7 w-7 text-blue-600" />
-                    </div>
-                    <CardTitle className="text-2xl group-hover:text-blue-600 transition-colors uppercase truncate">
-                      {company.name}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-2 mt-1 font-medium">
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        Verified
-                      </Badge>
-                      <span className="text-muted-foreground text-xs">{company.representation}</span>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center text-blue-600 font-semibold group-hover:gap-3 gap-2 transition-all">
-                      Submit Request <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-      </main>
+      }>
+        <DsarPortalContent />
+      </Suspense>
 
       {/* Footer Branding */}
       <footer className="max-w-7xl mx-auto px-6 py-20 border-t mt-20 text-center space-y-4">
