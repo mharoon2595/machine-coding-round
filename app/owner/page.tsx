@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AddCompanyModal } from "@/components/add-company-modal";
+import { SubscriptionsModal } from "@/components/subscriptions-modal";
 import { LogoutButton } from "@/components/logout-button";
 import { 
   Building2, 
@@ -86,6 +87,7 @@ async function OwnerPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <SubscriptionsModal companies={companies} />
           <AddCompanyModal ownerId={dbUser.id} />
           <LogoutButton />
         </div>
