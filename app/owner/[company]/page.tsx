@@ -14,12 +14,15 @@ import {
   Globe,
   Briefcase,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Filter,
+  Search
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { DsarStatusManager } from "@/components/dsar-status-manager";
 
 interface Props {
   params: Promise<{ company: string }>;
@@ -82,13 +85,13 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
               <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg">
                 <Building2 className="h-7 w-7" />
               </div>
-              <h1 className="text-4xl font-bold tracking-tight">{company.name}</h1>
+              <h1 className="text-4xl font-bold tracking-tight uppercase">{company.name}</h1>
               <Badge variant={company.status === "Active" ? "default" : "secondary"} className="ml-2 px-3 py-1">
                 {company.status}
               </Badge>
             </div>
             <p className="text-muted-foreground text-lg ml-15">
-              Managing compliance and privacy requests for {company.name}
+              Compliance Control Center for {company.name}
             </p>
           </div>
           <div className="flex gap-3">
@@ -98,54 +101,77 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
       </div>
 
       {/* Overview Grid */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="shadow-sm border-blue-50 dark:border-blue-900/20">
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card className="shadow-sm border-blue-100 dark:border-blue-900/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Building2 className="h-4 w-4" /> Company ID
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold font-mono">#{company.id}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm border-blue-100 dark:border-blue-900/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Briefcase className="h-4 w-4" /> Representation
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{company.representation}</div>
+            <div className="text-xl font-bold truncate">{company.representation}</div>
           </CardContent>
         </Card>
         
-        <Card className="shadow-sm border-blue-50 dark:border-blue-900/20">
+        <Card className="shadow-sm border-blue-100 dark:border-blue-900/20">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Globe className="h-4 w-4" /> Public Slug
+              <Globe className="h-4 w-4" /> Public Portal
             </CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-between">
-            <div className="text-xl font-mono text-blue-600">{company.slug}</div>
-            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+            <div className="text-lg font-mono text-blue-600 truncate mr-2">{company.slug}</div>
+            <Link href={`/dsar/${company.slug}`} target="_blank">
+               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-600">
+                  <ExternalLink className="h-4 w-4" />
+               </Button>
+            </Link>
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-blue-50 dark:border-blue-900/20">
+        <Card className="shadow-sm border-blue-100 dark:border-blue-900/20 bg-blue-50/10">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Calendar className="h-4 w-4" /> Established
+              <Inbox className="h-4 w-4" /> Total Requests
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {new Date(company.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
-            </div>
+            <div className="text-2xl font-bold">{dsars?.length || 0}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* DSAR Requests Section */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between border-b pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Inbox className="h-6 w-6 text-blue-600" />
-            DSAR Submissions
-            <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
-              {dsars?.length || 0} Total
-            </Badge>
+            Privacy Requests Feed
           </h2>
+          <div className="flex gap-2">
+             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input 
+                  type="text" 
+                  placeholder="Filter requests..." 
+                  className="h-9 w-48 pl-9 rounded-md border text-sm bg-background outline-none focus:ring-1 focus:ring-blue-500"
+                />
+             </div>
+             <Button variant="outline" size="sm" className="gap-2">
+                <Filter className="h-4 w-4" /> Filter
+             </Button>
+          </div>
         </div>
 
         {!dsars || dsars.length === 0 ? (
@@ -153,56 +179,67 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
             <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <MessageSquare className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-semibold">No requests yet</h3>
+            <h3 className="text-xl font-semibold">No requests received</h3>
             <p className="text-muted-foreground mt-1 text-center max-w-sm">
-              Any Data Subject Access Requests (DSAR) submitted for this company will appear here.
+              Your public [DSAR Portal Page] is active. Customers can submit requests there.
             </p>
+            <Link href={`/dsar/${company.slug}`} target="_blank" className="mt-6">
+               <Button variant="outline" className="gap-2">
+                  <ExternalLink className="h-4 w-4" /> View Public Portal
+               </Button>
+            </Link>
           </div>
         ) : (
           <div className="grid gap-6">
             {dsars.map((dsar) => (
-              <Card key={dsar.id} className="overflow-hidden hover:border-blue-200 transition-all duration-300 group">
-                <div className="flex flex-col lg:flex-row shadow-sm">
-                  {/* Status Sidebar */}
-                  <div className={`w-2 ${dsar.status === 'open' ? 'bg-amber-400' : 'bg-green-500'}`} />
+              <Card key={dsar.id} className="overflow-hidden hover:border-blue-200 transition-all duration-300 group shadow-sm">
+                <div className="flex flex-col lg:flex-row">
+                  <div className={`w-2 ${
+                    dsar.status === 'open' ? 'bg-amber-400' : 
+                    dsar.status === 'in_progress' ? 'bg-blue-500' :
+                    dsar.status === 'in_review' ? 'bg-purple-500' :
+                    'bg-green-500'
+                  }`} />
                   
                   <div className="flex-1 p-6">
-                    <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+                    <div className="flex flex-col md:flex-row justify-between gap-6 mb-6">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-blue-600" />
                           <h4 className="text-xl font-bold">{dsar.requesterName}</h4>
+                          <Badge variant="outline" className="ml-2 h-5 text-[10px] uppercase tracking-tighter">
+                             ID: #{dsar.id}
+                          </Badge>
                         </div>
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1.5">
+                          <span className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
                             <Mail className="h-3.5 w-3.5" />
-                            {dsar.requesterEmail}
+                            <a href={`mailto:${dsar.requesterEmail}`}>{dsar.requesterEmail}</a>
                           </span>
                           <span className="flex items-center gap-1.5">
                             <Phone className="h-3.5 w-3.5" />
                             {dsar.requesterPhone}
                           </span>
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" />
+                            {new Date(dsar.created_at).toLocaleString()}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-start gap-4">
-                        <div className="text-right">
-                          <Badge 
-                            variant={dsar.status === 'open' ? 'outline' : 'default'}
-                            className={`capitalize ${dsar.status === 'open' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'bg-green-100 text-green-700 hover:bg-green-100'}`}
-                          >
-                            {dsar.status}
-                          </Badge>
-                          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1 justify-end">
-                            <Clock className="h-3 w-3" />
-                            {new Date(dsar.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
+                      
+                      <div className="shrink-0 flex items-center justify-end">
+                         <DsarStatusManager 
+                           dsarId={dsar.id} 
+                           currentStatus={dsar.status} 
+                           companySlug={company.id.toString()} // using ID to revalidate
+                           requesterEmail={dsar.requesterEmail}
+                         />
                       </div>
                     </div>
 
                     <div className="bg-muted/40 p-5 rounded-2xl border border-muted relative group-hover:bg-muted/60 transition-colors">
                       <div className="absolute -top-3 left-4 bg-background px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" /> Request Content
+                        <MessageSquare className="h-3 w-3" /> Submitted Instruction
                       </div>
                       <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
                         {dsar.requestText}
@@ -218,6 +255,7 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
     </div>
   );
 }
+
 
 export default async function Page({ params }: Props) {
   const { company } = await params;

@@ -28,7 +28,8 @@ async function OwnerPage() {
     redirect("/auth/login");
   }
 
-  // Get DB user to get the bigint ID
+
+  // Get DB user 
   const { data: dbUser, error: dbUserError } = await supabase
     .from("user")
     .select("id, role")
@@ -46,6 +47,11 @@ async function OwnerPage() {
         </div>
       </div>
     );
+  }
+
+  // Role based check
+  if (dbUser.role !== "owner") {
+    redirect("/admin");
   }
 
   // Fetch only companies owned by this user

@@ -72,7 +72,14 @@ async function AdminContent() {
             Review and manage company submissions and platform activity.
           </p>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-3">
+          <Link href="/admin/dsars">
+            <Button variant="outline" className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50">
+               <ShieldCheck className="h-4 w-4" /> Global DSAR Feed
+            </Button>
+          </Link>
+          <LogoutButton />
+        </div>
       </div>
 
       {/* Stats Cards */}
