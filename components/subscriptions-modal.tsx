@@ -11,9 +11,12 @@ import {
   Ban, 
   RefreshCw,
   Building2,
-  ExternalLink
+  ExternalLink,
+  Loader2,
+  Lock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { createCheckoutSession } from "@/app/actions/stripe";
 
 interface Company {
   id: number;
@@ -24,6 +27,7 @@ interface Company {
 
 export function SubscriptionsModal({ companies }: { companies: Company[] }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
 
   const getStatusConfig = (status: string | null) => {
     switch (status) {
@@ -54,9 +58,24 @@ export function SubscriptionsModal({ companies }: { companies: Company[] }) {
       default:
         return { 
           icon: <Clock className="h-4 w-4 text-muted-foreground" />, 
-          label: "Inactive", 
+          label: "Unpaid", 
           class: "bg-muted text-muted-foreground border-border" 
         };
+    }
+  };
+
+  const handleCheckout = async (companyId: number, companyName: string) => {
+    setLoadingId(companyId);
+    try {
+      const { url } = await createCheckoutSession(companyId, companyName);
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to initiate checkout. Please check your Stripe Secret Key.");
+    } finally {
+      setLoadingId(null);
     }
   };
 
@@ -80,52 +99,69 @@ export function SubscriptionsModal({ companies }: { companies: Company[] }) {
               >
                 <X className="h-5 w-5 text-muted-foreground" />
               </button>
-              <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                <CreditCard className="h-6 w-6 text-blue-600" />
-                Subscription Management
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Monitor and manage billing for all your registered business entities.
-              </p>
+              <div className="flex items-center gap-3">
+                 <div className="h-12 w-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white">
+                    <CreditCard className="h-6 w-6" />
+                 </div>
+                 <div>
+                    <h2 className="text-2xl font-bold tracking-tight">Billing & Subscriptions</h2>
+                    <p className="text-sm text-muted-foreground">Manage your payment plans and portal accessibility.</p>
+                 </div>
+              </div>
             </div>
 
             <div className="p-0 max-h-[60vh] overflow-y-auto">
               {companies.length === 0 ? (
-                <div className="p-12 text-center text-muted-foreground">
-                  No companies found to manage subscriptions.
+                <div className="p-20 text-center text-muted-foreground">
+                  <Building2 className="h-12 w-12 mx-auto mb-4 opacity-10" />
+                  <p className="text-lg font-medium">No organizations found.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border">
                   {companies.map((company) => {
+                    const isSubscribed = company.subscriptionStatus === "active" || company.subscriptionStatus === "trialing";
                     const config = getStatusConfig(company.subscriptionStatus);
+                    
                     return (
-                      <div key={company.id} className="p-6 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                      <div key={company.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-muted/30 transition-colors group">
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                            <Building2 className="h-6 w-6 text-blue-600" />
+                          <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isSubscribed ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                            <Building2 className="h-6 w-6" />
                           </div>
                           <div>
-                            <h4 className="font-bold text-lg">{company.name}</h4>
+                            <h4 className="font-bold text-lg uppercase truncate max-w-[200px]">{company.name}</h4>
                             <div className="flex items-center gap-2 mt-1">
                               <Badge className={`flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${config.class}`}>
                                 {config.icon}
                                 {config.label}
                               </Badge>
-                              {company.stripeSubscriptionId && (
-                                <span className="text-[10px] font-mono text-muted-foreground">
-                                  ID: {company.stripeSubscriptionId.substring(0, 12)}...
+                              {isSubscribed && (
+                                <span className="text-[10px] font-mono text-muted-foreground hidden md:inline">
+                                  {company.stripeSubscriptionId}
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" className="h-8 gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50" asChild>
-                            <a href="#" onClick={(e) => e.preventDefault()}>
-                              Manage <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isSubscribed ? (
+                            <Button variant="ghost" size="sm" className="h-10 gap-2 text-muted-foreground font-semibold">
+                               <Lock className="h-3.5 w-3.5" /> Portal Active
+                            </Button>
+                          ) : (
+                            <Button 
+                              onClick={() => handleCheckout(company.id, company.name)}
+                              disabled={loadingId === company.id}
+                              className="h-10 px-6 gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20"
+                            >
+                              {loadingId === company.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>Pay Now <ExternalLink className="h-3.5 w-3.5" /></>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     );
@@ -134,14 +170,18 @@ export function SubscriptionsModal({ companies }: { companies: Company[] }) {
               )}
             </div>
 
-            <div className="p-6 border-t bg-muted/50 flex justify-end">
-              <Button onClick={() => setIsOpen(false)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                Close Dashboard
+            <div className="p-6 border-t bg-muted/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+               <p className="text-xs text-muted-foreground max-w-[280px]">
+                 Subscriptions are billed monthly at <strong>$29/company</strong>. Cancel anytime from your billing portal.
+               </p>
+              <Button onClick={() => setIsOpen(false)} variant="secondary" className="w-full sm:w-auto font-bold px-8">
+                Done
               </Button>
             </div>
           </div>
         </div>
       )}
+
     </>
   );
 }

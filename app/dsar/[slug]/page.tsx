@@ -30,6 +30,8 @@ export default async function PublicCompanyPage({ params }: Props) {
     .eq("status", "Active")
     .single();
 
+  const subscriptionStatus = company.subscriptionStatus === "active";
+
   if (error || !company) {
     notFound();
   }
@@ -125,13 +127,16 @@ export default async function PublicCompanyPage({ params }: Props) {
         </div>
 
         {/* The Form */}
-        <div id="request-form">
+        {
+          subscriptionStatus && (
+          <div id="request-form">
           <DsarForm 
             companyId={company.id} 
             ownerId={company.ownerId} 
             companyName={company.name} 
           />
         </div>
+         )}
       </main>
     </div>
   );
