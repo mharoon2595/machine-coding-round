@@ -95,7 +95,7 @@ async function OwnerPage() {
         <div className="flex items-center gap-3">
           <SubscriptionsModal companies={companies} />
           <AddCompanyModal ownerId={dbUser.id} />
-          <LogoutButton />
+          
         </div>
       </div>
 
