@@ -96,8 +96,8 @@ export function AddCompanyModal({ ownerId }: { ownerId: number }) {
                 </div>
               )}
 
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
+              <div className="flex gap-6">
+                <div className="space-y-4 w-full">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">General Info</h3>
                   
                   <div className="space-y-2">
@@ -157,41 +157,7 @@ export function AddCompanyModal({ ownerId }: { ownerId: number }) {
                   </div>
                 </div>
 
-                <div className="space-y-4 border-l pl-6 border-muted">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Billing Info (Stripe)</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="stripeCustomerId" className="text-sm font-medium">Customer ID</Label>
-                    <Input
-                      id="stripeCustomerId"
-                      placeholder="cus_..."
-                      className="font-mono text-sm"
-                      value={formData.stripeCustomerId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, stripeCustomerId: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="stripeSubscriptionId" className="text-sm font-medium">Subscription ID</Label>
-                    <Input
-                      id="stripeSubscriptionId"
-                      placeholder="sub_..."
-                      className="font-mono text-sm"
-                      value={formData.stripeSubscriptionId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, stripeSubscriptionId: e.target.value })
-                      }
-                    />
-                  </div>
-                  
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl mt-4 border border-blue-100 dark:border-blue-800">
-                    <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed italic">
-                      Note: These fields are usually populated automatically via Stripe integration. Adding them manually here is for administrative/manual setup.
-                    </p>
-                  </div>
-                </div>
+                
               </div>
 
               <div className="pt-6 border-t flex gap-3">
