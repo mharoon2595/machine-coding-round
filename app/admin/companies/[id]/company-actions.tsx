@@ -9,8 +9,8 @@ export function CompanyActions({ companyId }: { companyId: number }) {
   const [isLoading, setIsLoading] = useState<"approve" | "reject" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAction = async (status: "Active" | "Rejected") => {
-    setIsLoading(status === "Active" ? "approve" : "reject");
+  const handleAction = async (status: "Approved" | "Rejected") => {
+    setIsLoading(status === "Approved" ? "approve" : "reject");
     setError(null);
     
     try {
@@ -34,7 +34,7 @@ export function CompanyActions({ companyId }: { companyId: number }) {
       <div className="flex flex-col sm:flex-row gap-4">
         <Button
           size="lg"
-          onClick={() => handleAction("Active")}
+          onClick={() => handleAction("Approved")}
           disabled={!!isLoading}
           className="flex-1 bg-green-600 hover:bg-green-700 text-white gap-2 h-12 shadow-sm"
         >

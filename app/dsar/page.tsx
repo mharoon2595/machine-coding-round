@@ -21,7 +21,7 @@ export default async function DsarPortalPage() {
   const { data: companies, error } = await supabase
     .from("company")
     .select("*")
-    .eq("status", "Active")
+    .eq("status", "Approved")
     .order("name", { ascending: true });
 
   return (

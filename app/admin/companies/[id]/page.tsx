@@ -94,7 +94,7 @@ async function CompanyDetails({ id }: { id: string }) {
               </div>
             </div>
           </div>
-          <LogoutButton />
+         
         </div>
       </div>
 
@@ -167,8 +167,7 @@ async function CompanyDetails({ id }: { id: string }) {
             </div>
             <h3 className="text-xl font-semibold">No requests received</h3>
             <p className="text-muted-foreground mt-1 text-center max-w-sm">
-              Your public [DSAR Portal Page] is active. Customers can submit requests there.
-            </p>
+              {"Public [DSAR Portal Page] is not active as it is pending admin approval and subscription is not active. Customers cannot submit requests there right now."}            </p>
             <Link href={`/dsar/${company.slug}`} target="_blank" className="mt-6">
                <Button variant="outline" className="gap-2">
                   <ExternalLink className="h-4 w-4" /> View Public Portal

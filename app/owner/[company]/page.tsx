@@ -86,7 +86,7 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
                 <Building2 className="h-7 w-7" />
               </div>
               <h1 className="text-4xl font-bold tracking-tight uppercase">{company.name}</h1>
-              <Badge variant={company.status === "Active" ? "default" : "secondary"} className="ml-2 px-3 py-1">
+              <Badge variant={["Active", "Approved"].includes(company.status) ? "default" : "secondary"} className="ml-2 px-3 py-1">
                 {company.status}
               </Badge>
             </div>
@@ -94,9 +94,7 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
               Compliance Control Center for {company.name}
             </p>
           </div>
-          <div className="flex gap-3">
-            <LogoutButton />
-          </div>
+          
         </div>
       </div>
 
@@ -169,7 +167,7 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
             </div>
             <h3 className="text-xl font-semibold">No requests received</h3>
             <p className="text-muted-foreground mt-1 text-center max-w-sm">
-              Your public [DSAR Portal Page] is active. Customers can submit requests there.
+              {["Active", "Approved"].includes(company.status) && company.subscriptionStatus === "active" ? "Your public [DSAR Portal Page] is active. Customers can submit requests there." : "Your public [DSAR Portal Page] is not active as it is either pending admin approval or subscription is not active or both. Customers cannot submit requests there right now."}
             </p>
             <Link href={`/dsar/${company.slug}`} target="_blank" className="mt-6">
                <Button variant="outline" className="gap-2">

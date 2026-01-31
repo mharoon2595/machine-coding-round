@@ -1,24 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, X, Loader2, Building2, Globe, Briefcase } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { companySchema } from "@/lib/validations";
+import { createCompany } from "@/app/actions/company";
 
 export function AddCompanyModal({ ownerId }: { ownerId: number }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
   const [formData, setFormData] = useState({
     name: "",
     representation: "",
     slug: "",
-    status: "Active",
+    status: "Pending",
     stripeCustomerId: "",
     stripeSubscriptionId: "",
   });
@@ -26,36 +27,42 @@ export function AddCompanyModal({ ownerId }: { ownerId: number }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    setErrors({});
 
-    const supabase = createClient();
+    // Client-side validation
+    const result = companySchema.safeParse({
+      ...formData,
+      ownerId,
+    });
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const { error: insertError } = await supabase.from("company").insert({
-        name: formData.name,
-        representation: formData.representation,
-        slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, "-"),
-        status: formData.status,
-        ownerId: ownerId,
-        stripeCustomerId: formData.stripeCustomerId || null,
-        stripeSubscriptionId: formData.stripeSubscriptionId || null,
-        subscriptionStatus: formData.stripeSubscriptionId ? "active" : "inactive",
-      });
-
-      if (insertError) throw insertError;
+      // server side validation using company.ts server action
+      await createCompany(ownerId, formData);
 
       setIsOpen(false);
       setFormData({ 
         name: "", 
         representation: "", 
         slug: "", 
-        status: "Active",
+        status: "Pending",
         stripeCustomerId: "",
         stripeSubscriptionId: "",
       });
       router.refresh();
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setErrors({ root: err.message || "Something went wrong" });
     } finally {
       setIsLoading(false);
     }
@@ -90,9 +97,9 @@ export function AddCompanyModal({ ownerId }: { ownerId: number }) {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
-              {error && (
+              {errors.root && (
                 <div className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg">
-                  {error}
+                  {errors.root}
                 </div>
               )}
 
@@ -109,14 +116,15 @@ export function AddCompanyModal({ ownerId }: { ownerId: number }) {
                       <Input
                         id="name"
                         placeholder="Acme Corp"
-                        className="pl-10"
+                        className={`pl-10 ${errors.name ? 'ring-2 ring-destructive' : ''}`}
                         required
                         value={formData.name}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
                       />
                     </div>
+                    {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -128,14 +136,15 @@ export function AddCompanyModal({ ownerId }: { ownerId: number }) {
                       <Input
                         id="representation"
                         placeholder="Legal or Business Representation"
-                        className="pl-10"
+                        className={`pl-10 ${errors.representation ? 'ring-2 ring-destructive' : ''}`}
                         required
                         value={formData.representation}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setFormData({ ...formData, representation: e.target.value })
                         }
                       />
                     </div>
+                    {errors.representation && <p className="text-xs text-destructive">{errors.representation}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -147,13 +156,14 @@ export function AddCompanyModal({ ownerId }: { ownerId: number }) {
                       <Input
                         id="slug"
                         placeholder="acme-corp"
-                        className="pl-10"
+                        className={`pl-10 ${errors.slug ? 'ring-2 ring-destructive' : ''}`}
                         value={formData.slug}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           setFormData({ ...formData, slug: e.target.value })
                         }
                       />
                     </div>
+                    {errors.slug && <p className="text-xs text-destructive">{errors.slug}</p>}
                   </div>
                 </div>
 

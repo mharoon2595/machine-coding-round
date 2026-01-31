@@ -12,7 +12,8 @@ import {
   Clock, 
   LayoutDashboard,
   ShieldCheck,
-  TrendingUp
+  TrendingUp,
+  Inbox
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +61,10 @@ async function OwnerPage() {
   try {
     const { data, error: companiesError } = await supabase
       .from("company")
-      .select("*")
+      .select(`
+        *,
+        dsar_request_list(count)
+      `)
       .eq("ownerId", dbUser.id)
       .order("created_at", { ascending: false });
 
@@ -70,7 +74,9 @@ async function OwnerPage() {
     console.error("Error fetching companies:", error);
   }
 
-  const activeCompanies = companies.filter(c => c.status === "Active").length;
+  // Calculate DSAR submssions using JOIN
+
+  const activeCompanies = companies.filter(c => ["Active", "Approved"].includes(c.status)).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -153,7 +159,7 @@ async function OwnerPage() {
                     <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-2">
                       <Building2 className="h-6 w-6 text-blue-600" />
                     </div>
-                    <Badge variant={company.status === "Active" ? "default" : "secondary"} className={company.status === "Active" ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}>
+                    <Badge variant={["Active", "Approved"].includes(company.status) ? "default" : "secondary"} className={["Active", "Approved"].includes(company.status) ? "bg-green-100 text-green-700 hover:bg-green-100" : ""}>
                       {company.status}
                     </Badge>
                   </div>
@@ -172,8 +178,8 @@ async function OwnerPage() {
                 <CardContent className="pt-0 text-sm text-muted-foreground">
                   <div className="flex flex-col gap-2 border-t pt-4 mt-2">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>Slug: <strong>{company.slug}</strong></span>
+                      <Inbox className="h-3.5 w-3.5" />
+                      <span>DSAR submissions <strong>{company.dsar_request_list?.[0]?.count || 0}</strong></span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5" />

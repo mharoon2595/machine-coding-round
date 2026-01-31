@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+import { dsarRequestSchema } from "@/lib/validations";
+
 export async function submitDsarRequest(formData: {
   companyId: number;
   ownerId: number;
@@ -11,6 +13,13 @@ export async function submitDsarRequest(formData: {
   requesterPhone: string;
   requestText: string;
 }) {
+  // Server-side validation
+  const validatedFields = dsarRequestSchema.safeParse(formData);
+
+  if (!validatedFields.success) {
+    throw new Error(validatedFields.error.issues.map((issue) => issue.message).join(", "));
+  }
+
   const supabase = await createClient();
 
   const { error } = await supabase.from("dsar_request_list").insert({

@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   Send
 } from "lucide-react";
+import { dsarRequestSchema } from "@/lib/validations";
+import { z } from "zod";
 
 interface DsarFormProps {
   companyId: number;
@@ -26,8 +28,7 @@ interface DsarFormProps {
 export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
+  const [errors, setErrors] = useState<Record<string, string>>({}); // Changed from 'error'
   const [formData, setFormData] = useState({
     requesterName: "",
     requesterEmail: "",
@@ -38,7 +39,26 @@ export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    setErrors({}); // Clear previous errors
+
+    // Client-side validation
+    const result = dsarRequestSchema.safeParse({
+      ...formData,
+      companyId,
+      ownerId,
+    });
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       await submitDsarRequest({
@@ -48,7 +68,7 @@ export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
       });
       setIsSuccess(true);
     } catch (err: any) {
-      setError(err.message || "Something went wrong while submitting your request.");
+      setErrors({ root: err.message || "Something went wrong while submitting your request." });
     } finally {
       setIsLoading(false);
     }
@@ -92,9 +112,9 @@ export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="p-8 space-y-6">
-        {error && (
+        {errors.root && (
           <div className="p-4 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-xl">
-            {error}
+            {errors.root}
           </div>
         )}
 
@@ -108,12 +128,13 @@ export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
               <Input
                 id="requesterName"
                 placeholder="Jane Doe"
-                className="pl-11 h-12 bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500"
+                className={`pl-11 h-12 bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500 ${errors.requesterName ? 'ring-2 ring-destructive' : ''}`}
                 required
                 value={formData.requesterName}
-                onChange={(e) => setFormData({ ...formData, requesterName: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, requesterName: e.target.value })}
               />
             </div>
+            {errors.requesterName && <p className="text-xs text-destructive px-1">{errors.requesterName}</p>}
           </div>
 
           <div className="space-y-2">
@@ -126,12 +147,13 @@ export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
                 id="requesterEmail"
                 type="email"
                 placeholder="jane@example.com"
-                className="pl-11 h-12 bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500"
+                className={`pl-11 h-12 bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500 ${errors.requesterEmail ? 'ring-2 ring-destructive' : ''}`}
                 required
                 value={formData.requesterEmail}
-                onChange={(e) => setFormData({ ...formData, requesterEmail: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, requesterEmail: e.target.value })}
               />
             </div>
+            {errors.requesterEmail && <p className="text-xs text-destructive px-1">{errors.requesterEmail}</p>}
           </div>
         </div>
 
@@ -144,12 +166,13 @@ export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
             <Input
               id="requesterPhone"
               placeholder="+1 (555) 000-0000"
-              className="pl-11 h-12 bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500"
+              className={`pl-11 h-12 bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500 ${errors.requesterPhone ? 'ring-2 ring-destructive' : ''}`}
               required
               value={formData.requesterPhone}
-              onChange={(e) => setFormData({ ...formData, requesterPhone: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, requesterPhone: e.target.value })}
             />
           </div>
+          {errors.requesterPhone && <p className="text-xs text-destructive px-1">{errors.requesterPhone}</p>}
         </div>
 
         <div className="space-y-2">
@@ -161,12 +184,13 @@ export function DsarForm({ companyId, ownerId, companyName }: DsarFormProps) {
             <Textarea
               id="requestText"
               placeholder="Please describe your request (e.g., 'I want to see all my transaction history' or 'Please delete my account and associated data')."
-              className="pl-11 pt-4 min-h-[160px] bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500 text-base"
+              className={`pl-11 pt-4 min-h-[160px] bg-muted/30 focus:bg-background transition-all border-none focus:ring-2 focus:ring-blue-500 text-base ${errors.requestText ? 'ring-2 ring-destructive' : ''}`}
               required
               value={formData.requestText}
-              onChange={(e) => setFormData({ ...formData, requestText: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, requestText: e.target.value })}
             />
           </div>
+          {errors.requestText && <p className="text-xs text-destructive px-1">{errors.requestText}</p>}
           <p className="text-xs text-muted-foreground px-1 mt-2">
             Tip: Be specific about the data you are requesting to help the organization process your request faster.
           </p>

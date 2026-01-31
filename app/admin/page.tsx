@@ -105,7 +105,7 @@ async function AdminContent() {
             <CardDescription className="text-green-500 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" /> Active Entities
             </CardDescription>
-            <CardTitle className="text-3xl font-bold">{companies.filter(c => c.status === "Active").length}</CardTitle>
+            <CardTitle className="text-3xl font-bold">{companies.filter(c => ["Active", "Approved"].includes(c.status)).length}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-red-100 dark:border-red-900/50 bg-red-50/10">
@@ -126,11 +126,7 @@ async function AdminContent() {
               <CardTitle className="text-xl">Submission Log</CardTitle>
               <CardDescription>Comprehensive list of all registered business entities.</CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" /> Filter
-              </Button>
-            </div>
+            
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -172,10 +168,10 @@ async function AdminContent() {
                       </td>
                       <td className="p-4 align-middle">
                         <Badge 
-                          variant={company.status === "Active" ? "default" : company.status === "Pending" ? "secondary" : "destructive"}
+                          variant={["Active", "Approved"].includes(company.status) ? "default" : company.status === "Pending" ? "secondary" : "destructive"}
                           className={`
                             ${company.status === 'Pending' ? 'animate-pulse bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300' : ''}
-                            ${company.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : ''}
+                            ${["Active", "Approved"].includes(company.status) ? 'bg-green-100 text-green-700 dark:bg-green-900/30' : ''}
                           `}
                         >
                           {company.status}

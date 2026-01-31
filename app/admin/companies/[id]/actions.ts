@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function updateCompanyStatus(companyId: number, status: "Active" | "Rejected") {
+export async function updateCompanyStatus(companyId: number, status: "Approved" | "Rejected") {
   const supabase = await createClient();
 
   // 1. Verify Authentication
@@ -23,10 +23,32 @@ export async function updateCompanyStatus(companyId: number, status: "Active" | 
     throw new Error("Forbidden: You do not have permission to perform this action.");
   }
 
-  // 3. Perform the update
+  // 3. Get company details to check for slug
+  const { data: company, error: fetchError } = await supabase
+    .from("company")
+    .select("name, slug")
+    .eq("id", companyId)
+    .single();
+
+  if (fetchError || !company) {
+    throw new Error("Failed to fetch company details.");
+  }
+
+  const updateData: any = { status };
+
+  // Generate slug if it's missing and we're approving
+  if (status === "Approved" && !company.slug) {
+    updateData.slug = company.name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+  }
+
+  // 4. Perform the update
   const { error: updateError } = await supabase
     .from("company")
-    .update({ status })
+    .update(updateData)
     .eq("id", companyId);
 
   if (updateError) {
@@ -34,7 +56,7 @@ export async function updateCompanyStatus(companyId: number, status: "Active" | 
     throw new Error("Failed to update company status.");
   }
 
-  // 4. Revalidate the path to refresh the UI
+  // 5. Revalidate the path to refresh the UI
   revalidatePath("/admin");
   revalidatePath(`/admin/companies/${companyId}`);
 

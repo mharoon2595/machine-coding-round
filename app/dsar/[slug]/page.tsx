@@ -27,10 +27,10 @@ export default async function PublicCompanyPage({ params }: Props) {
     .from("company")
     .select("*")
     .eq("slug", slug)
-    .eq("status", "Active")
+    .eq("status", "Approved")
     .single();
 
-  const subscriptionStatus = company.subscriptionStatus === "active";
+  const subscriptionStatus = company?.subscriptionStatus === "active";
 
   if (error || !company) {
     notFound();
