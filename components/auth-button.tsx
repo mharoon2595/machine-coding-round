@@ -41,14 +41,14 @@ export async function AuthButton() {
   return user ? (
     <div className="flex items-center justify-between gap-4 p-5">
       <Link href="/">DSAR Portal</Link>
-      <div className="flex gap-2 items-center">
+      <div className="flex flex-wrap gap-2 items-center">
       Hey, {user.email}!
       {redirectButton}
       <LogoutButton />
       </div>
     </div>
   ) : (
-    <div className="flex gap-2 justify-between p-5">
+    <div className="flex flex-wrap gap-2 justify-between p-5">
       <Link href="/">DSAR Portal</Link>
       <div className="flex gap-2 items-center">
       <Button asChild size="sm" variant={"outline"}>
