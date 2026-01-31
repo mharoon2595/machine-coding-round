@@ -146,7 +146,8 @@ async function OwnerPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {companies.map((company) => (
-              <Card key={company.id} className="group hover:shadow-md transition-all duration-300 border-l-4 border-l-blue-500">
+              <Link key={company.id} href={`/owner/${company.id}`}>
+              <Card className="group hover:shadow-md transition-all duration-300 border-l-4 border-l-blue-500">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="h-10 w-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-2">
@@ -160,9 +161,8 @@ async function OwnerPage() {
                     {company.name}
                   </CardTitle>
                   <Button asChild>
-                    <Link href={`/owner/${company.id}`}>
-                      Navigate
-                    </Link>
+                    
+                  
                   </Button>
                   <CardDescription className="flex items-center gap-1 mt-1 font-medium">
                     <Briefcase className="h-3 w-3" />
@@ -182,6 +182,7 @@ async function OwnerPage() {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             ))}
           </div>
         )}

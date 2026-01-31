@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Suspense } from "react";
+import { AuthButton } from "@/components/auth-button";
 
 export default async function DsarPortalPage() {
   const supabase = await createClient();
@@ -24,6 +26,9 @@ export default async function DsarPortalPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
+      <Suspense>
+        <AuthButton />
+      </Suspense>
       {/* Hero Section */}
       <div className="bg-white dark:bg-slate-900 border-b">
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
@@ -49,7 +54,7 @@ export default async function DsarPortalPage() {
           </div>
           
           <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            
             <input 
               type="text" 
               placeholder="Search companies..." 
