@@ -81,17 +81,7 @@ async function AdminDsarContent() {
               <CardDescription>Auditing {dsars?.length || 0} total submissions.</CardDescription>
             </div>
             <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input 
-                  type="text" 
-                  placeholder="Filter requests..." 
-                  className="h-9 w-64 pl-9 rounded-md border text-sm bg-background outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" /> Export
-              </Button>
+              
             </div>
           </div>
         </CardHeader>

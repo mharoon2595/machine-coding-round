@@ -54,8 +54,9 @@ export function LoginForm({
        throw new Error("Something went wrong, please try again.");
      }
      
-     if(  data.redirectUrl){
+     if(data.redirectUrl){
       router.replace(data.redirectUrl);
+      router.refresh();
      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");

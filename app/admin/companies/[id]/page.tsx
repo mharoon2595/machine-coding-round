@@ -11,7 +11,10 @@ import {
   XCircle,
   Clock,
   User,
-  Mail
+  Mail,
+  MessageSquare,
+  ExternalLink,
+  Phone
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
 import { CompanyActions } from "./company-actions";
+import { DsarStatusManager } from "@/components/dsar-status-manager";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -52,6 +56,12 @@ async function CompanyDetails({ id }: { id: string }) {
     `)
     .eq("id", id)
     .single();
+
+    const { data: dsars, error: dsarError } = await supabase
+    .from("dsar_request_list")
+    .select("*")
+    .eq("companyId", company.id)
+    .order("created_at", { ascending: false });
 
   if (error || !company) notFound();
 
@@ -149,6 +159,84 @@ async function CompanyDetails({ id }: { id: string }) {
           </CardContent>
         </Card>
       )}
+
+       {!dsars || dsars.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 bg-muted/30 rounded-3xl border-2 border-dashed border-muted">
+            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <MessageSquare className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold">No requests received</h3>
+            <p className="text-muted-foreground mt-1 text-center max-w-sm">
+              Your public [DSAR Portal Page] is active. Customers can submit requests there.
+            </p>
+            <Link href={`/dsar/${company.slug}`} target="_blank" className="mt-6">
+               <Button variant="outline" className="gap-2">
+                  <ExternalLink className="h-4 w-4" /> View Public Portal
+               </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {dsars.map((dsar) => (
+              <Card key={dsar.id} className="overflow-hidden hover:border-blue-200 transition-all duration-300 group shadow-sm">
+                <div className="flex flex-col lg:flex-row">
+                  <div className={`w-2 ${
+                    dsar.status === 'open' ? 'bg-amber-400' : 
+                    dsar.status === 'in_progress' ? 'bg-blue-500' :
+                    dsar.status === 'in_review' ? 'bg-purple-500' :
+                    'bg-green-500'
+                  }`} />
+                  
+                  <div className="flex-1 p-6">
+                    <div className="flex flex-col md:flex-row justify-between gap-6 mb-6">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-blue-600" />
+                          <h4 className="text-xl font-bold">{dsar.requesterName}</h4>
+                          <Badge variant="outline" className="ml-2 h-5 text-[10px] uppercase tracking-tighter">
+                             ID: #{dsar.id}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
+                            <Mail className="h-3.5 w-3.5" />
+                            <a href={`mailto:${dsar.requesterEmail}`}>{dsar.requesterEmail}</a>
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Phone className="h-3.5 w-3.5" />
+                            {dsar.requesterPhone}
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" />
+                            {new Date(dsar.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="shrink-0 flex items-center justify-end">
+                         <DsarStatusManager 
+                           dsarId={dsar.id} 
+                           currentStatus={dsar.status} 
+                           companySlug={company.id.toString()} // using ID to revalidate
+                           requesterEmail={dsar.requesterEmail}
+                         />
+                      </div>
+                    </div>
+
+                    <div className="bg-muted/40 p-5 rounded-2xl border border-muted relative group-hover:bg-muted/60 transition-colors">
+                      <div className="absolute -top-3 left-4 bg-background px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" /> Submitted Instruction
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                        {dsar.requestText}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
     </div>
   );
 }

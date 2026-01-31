@@ -159,19 +159,7 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
             <Inbox className="h-6 w-6 text-blue-600" />
             Privacy Requests Feed
           </h2>
-          <div className="flex gap-2">
-             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input 
-                  type="text" 
-                  placeholder="Filter requests..." 
-                  className="h-9 w-48 pl-9 rounded-md border text-sm bg-background outline-none focus:ring-1 focus:ring-blue-500"
-                />
-             </div>
-             <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" /> Filter
-             </Button>
-          </div>
+          
         </div>
 
         {!dsars || dsars.length === 0 ? (

@@ -26,9 +26,7 @@ export default async function DsarPortalPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950">
-      <Suspense>
-        <AuthButton />
-      </Suspense>
+      
       {/* Hero Section */}
       <div className="bg-white dark:bg-slate-900 border-b">
         <div className="max-w-7xl mx-auto px-6 py-20 text-center">
@@ -55,11 +53,7 @@ export default async function DsarPortalPage() {
           
           <div className="relative w-full md:w-96">
             
-            <input 
-              type="text" 
-              placeholder="Search companies..." 
-              className="w-full pl-10 pr-4 py-2 rounded-xl border bg-background focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-            />
+            
           </div>
         </div>
 
