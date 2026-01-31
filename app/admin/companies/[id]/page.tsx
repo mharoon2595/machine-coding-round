@@ -21,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { LogoutButton } from "@/components/logout-button";
-import { CompanyActions } from "./company-actions";
+import { CompanyActions } from "../../../../components/company-actions";
 import { DsarStatusManager } from "@/components/dsar-status-manager";
 import { DsarList } from "@/components/dsar-list";
 

@@ -16,7 +16,7 @@ import {
   Lock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { createCheckoutSession } from "@/app/actions/stripe";
+import { createCheckoutSession } from "@/app/actions/create-stripe-link";
 
 interface Company {
   id: number;

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, X, Loader2, Building2, Globe, Briefcase } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { companySchema } from "@/lib/validations";
-import { createCompany } from "@/app/actions/company";
+import { createCompany } from "@/app/actions/create-company";
 
 export function AddCompanyModal({ ownerId }: { ownerId: number }) {
   const [isOpen, setIsOpen] = useState(false);

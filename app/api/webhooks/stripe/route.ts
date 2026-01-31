@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 
-// Use Supabase Service Role Key for administrative updates in webhooks
+
 
 
 export async function POST(req: NextRequest) {
   console.log(">>> Stripe Webhook Received");
-  
+ 
+  // Supabase Service Role Key for administrative updates in webhooks which bypasses RLS
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!

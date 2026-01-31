@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { updateCompanyStatus } from "./actions";
+import { updateCompanyStatus } from "../app/actions/update-company-status";
 
 export function CompanyActions({ companyId }: { companyId: number }) {
   const [isLoading, setIsLoading] = useState<"approve" | "reject" | null>(null);

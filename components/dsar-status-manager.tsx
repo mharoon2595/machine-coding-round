@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateDsarStatus } from "@/app/actions/dsar";
+import { updateDsarStatus } from "@/app/actions/submit-dsar";
 import { 
   Select, 
   SelectContent, 

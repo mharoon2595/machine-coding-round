@@ -3,7 +3,6 @@
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 export async function createCheckoutSession(companyId: number, companyName: string) {
   const supabase = await createClient();

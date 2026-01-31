@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { submitDsarRequest } from "@/app/actions/dsar";
+import { submitDsarRequest } from "@/app/actions/submit-dsar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
