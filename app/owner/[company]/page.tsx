@@ -28,7 +28,8 @@ interface Props {
   params: Promise<{ company: string }>;
 }
 
-async function CompanyProfile({ companyId }: { companyId: string }) {
+async function CompanyProfile({ params }: { params: Promise<{ company: string }> }) {
+  const { company: companyId } = await params;
   const supabase = await createClient();
 
   // 1. Get auth user
@@ -243,9 +244,7 @@ async function CompanyProfile({ companyId }: { companyId: string }) {
 }
 
 
-export default async function Page({ params }: Props) {
-  const { company } = await params;
-
+export default function Page({ params }: Props) {
   return (
     <main className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-6 md:p-12">
       <Suspense fallback={
@@ -254,7 +253,7 @@ export default async function Page({ params }: Props) {
           <p className="text-muted-foreground font-medium animate-pulse">Loading company data...</p>
         </div>
       }>
-        <CompanyProfile companyId={company} />
+        <CompanyProfile params={params} />
       </Suspense>
     </main>
   );

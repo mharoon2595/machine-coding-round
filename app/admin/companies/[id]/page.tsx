@@ -28,7 +28,8 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-async function CompanyDetails({ id }: { id: string }) {
+async function CompanyDetails({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
 
   // Verify Admin
@@ -57,13 +58,13 @@ async function CompanyDetails({ id }: { id: string }) {
     .eq("id", id)
     .single();
 
-    const { data: dsars, error: dsarError } = await supabase
+  if (error || !company) notFound();
+
+  const { data: dsars, error: dsarError } = await supabase
     .from("dsar_request_list")
     .select("*")
     .eq("companyId", company.id)
     .order("created_at", { ascending: false });
-
-  if (error || !company) notFound();
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -84,7 +85,7 @@ async function CompanyDetails({ id }: { id: string }) {
             <div>
               <h1 className="text-4xl font-bold tracking-tight">{company.name}</h1>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant={company.status === "Active" ? "default" : company.status === "Pending" ? "secondary" : "destructive"}>
+                <Badge variant={["Active", "Approved"].includes(company.status) ? "default" : company.status === "Pending" ? "secondary" : "destructive"}>
                   {company.status}
                 </Badge>
                 <span className="text-sm text-muted-foreground flex items-center gap-1">
@@ -167,7 +168,8 @@ async function CompanyDetails({ id }: { id: string }) {
             </div>
             <h3 className="text-xl font-semibold">No requests received</h3>
             <p className="text-muted-foreground mt-1 text-center max-w-sm">
-              {"Public [DSAR Portal Page] is not active as it is pending admin approval and subscription is not active. Customers cannot submit requests there right now."}            </p>
+              {["Active", "Approved"].includes(company.status) && company.subscriptionStatus === "active" ? "Your public [DSAR Portal Page] is active. Customers can submit requests there." : "Public [DSAR Portal Page] is not active as it is either pending admin approval or subscription is not active or both. Customers cannot submit requests there right now."}
+            </p>
             <Link href={`/dsar/${company.slug}`} target="_blank" className="mt-6">
                <Button variant="outline" className="gap-2">
                   <ExternalLink className="h-4 w-4" /> View Public Portal
@@ -240,9 +242,7 @@ async function CompanyDetails({ id }: { id: string }) {
   );
 }
 
-export default async function Page({ params }: Props) {
-  const { id } = await params;
-
+export default function Page({ params }: Props) {
   return (
     <main className="min-h-screen bg-slate-50/50 dark:bg-slate-950 p-6 md:p-12">
       <Suspense fallback={
@@ -251,7 +251,7 @@ export default async function Page({ params }: Props) {
           <p className="text-muted-foreground font-medium animate-pulse">Loading company details...</p>
         </div>
       }>
-        <CompanyDetails id={id} />
+        <CompanyDetails params={params} />
       </Suspense>
     </main>
   );
